@@ -1,0 +1,6 @@
+{
+  "name": "AI Travel Agent",
+  "description": "Dein persönlicher KI-Reiseagent für komplette Reiseplanungen und Optimierungen.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
