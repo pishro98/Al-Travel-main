@@ -7,6 +7,9 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +30,8 @@ import com.example.TravelUiState
 import com.example.TravelViewModel
 import androidx.compose.animation.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.res.stringResource
+import com.example.R
 
 @Composable
 fun MainApp(viewModel: TravelViewModel) {
@@ -82,6 +87,15 @@ fun MainApp(viewModel: TravelViewModel) {
                 composable("profile") {
                     ProfileScreen(viewModel)
                 }
+                composable("weather") {
+                    WeatherScreen(viewModel, navController)
+                }
+                composable("budget") {
+                    BudgetScreen(navController)
+                }
+                composable("docs") {
+                    DocsScreen(navController)
+                }
             }
         }
     }
@@ -93,7 +107,9 @@ fun SideNavigationRail(navController: NavHostController) {
         listOf(
             NavigationItem("home", "Home", Icons.Default.Home),
             NavigationItem("trips", "Reisen", Icons.Default.Flight),
-            NavigationItem("discover", "Entdecken", Icons.Default.Explore),
+            NavigationItem("weather", "Wetter", Icons.Default.LocationOn),
+            NavigationItem("budget", "Budget", Icons.Default.ShoppingCart),
+            NavigationItem("docs", "Docs", Icons.Default.Info),
             NavigationItem("profile", "Profil", Icons.Default.Person)
         )
     }
@@ -136,7 +152,9 @@ fun BottomNavigationBar(navController: NavHostController) {
         listOf(
             NavigationItem("home", "Home", Icons.Default.Home),
             NavigationItem("trips", "Reisen", Icons.Default.Flight),
-            NavigationItem("discover", "Entdecken", Icons.Default.Explore),
+            NavigationItem("weather", "Wetter", Icons.Default.LocationOn),
+            NavigationItem("budget", "Budget", Icons.Default.ShoppingCart),
+            NavigationItem("docs", "Docs", Icons.Default.Info),
             NavigationItem("profile", "Profil", Icons.Default.Person)
         )
     }

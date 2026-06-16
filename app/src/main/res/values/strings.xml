@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">AI Travel Agent</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_trips">Reisen</string>
+    <string name="nav_discover">Entdecken</string>
+    <string name="nav_weather">Wetter</string>
+    <string name="nav_budget">Budget</string>
+    <string name="nav_docs">Dokumente</string>
+    <string name="nav_profile">Profil</string>
 </resources>

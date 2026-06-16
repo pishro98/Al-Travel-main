@@ -32,43 +32,68 @@ fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 800.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                text = "Wohin möchtest du reisen?",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().clickable { navController.navigate("agent") }
+            // Hero Section
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Träume deine nächste Reise", style = MaterialTheme.typography.titleMedium)
-                    Text("Erzähle mir, worauf du Lust hast. Ich übernehme die komplette Planung.", style = MaterialTheme.typography.bodyMedium)
-                    Button(
-                        onClick = { navController.navigate("agent") },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    ) {
-                        Text("Reise mit KI planen")
+                Card(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(32.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(24.dp)
+                        ) {
+                            Text(
+                                text = "Wohin möchtest du reisen?",
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { navController.navigate("agent") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                            ) {
+                                Text("Reise mit KI planen", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
 
-            Text("Quick Actions", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-                QuickActionCard(icon = Icons.Default.Flight, title = "Flug suchen", modifier = Modifier.weight(1f)) {
-                    navController.navigate("agent")
+            PaddingValues(horizontal = 16.dp)
+
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text("Quick Actions", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    QuickActionCard(icon = Icons.Default.Flight, title = "Flug suchen", modifier = Modifier.weight(1f)) {
+                        navController.navigate("agent")
+                    }
+                    QuickActionCard(icon = Icons.Default.Hotel, title = "Hotel suchen", modifier = Modifier.weight(1f)) {
+                        navController.navigate("agent")
+                    }
                 }
-                QuickActionCard(icon = Icons.Default.Hotel, title = "Hotel suchen", modifier = Modifier.weight(1f)) {
-                    navController.navigate("agent")
-                }
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                Text("Aktuelle Empfehlungen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            
-            Text("Aktuelle Empfehlungen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             
             val recommendations = remember {
                 listOf(
@@ -77,26 +102,39 @@ fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
                 )
             }
             
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
                 items(recommendations) { item ->
                     Card(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         modifier = Modifier
-                            .width(240.dp)
+                            .width(260.dp)
+                            .height(180.dp)
                             .clickable {
                                 viewModel.destination = item.searchQuery
                                 viewModel.updateSuggestedAirportForDestination(item.searchQuery)
                                 navController.navigate("agent")
                             }
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(item.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(item.subtitle, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+                        Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                            Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                                Text(item.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                SuggestionChip(
+                                    onClick = { },
+                                    label = { Text(item.subtitle, fontWeight = FontWeight.SemiBold) }
+                                )
+                            }
                         }
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

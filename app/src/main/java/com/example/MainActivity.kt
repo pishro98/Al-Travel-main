@@ -142,6 +142,17 @@ class TravelViewModel(application: android.app.Application) : androidx.lifecycle
     
     private val prefs = application.getSharedPreferences("user_profile_prefs", android.content.Context.MODE_PRIVATE)
 
+    var liveWeather by mutableStateOf<com.example.service.WeatherResponse?>(null)
+    
+    fun fetchLiveWeather(city: String) {
+        viewModelScope.launch {
+            val result = com.example.service.WeatherService().getForecastForCity(city)
+            result.onSuccess { weather ->
+                liveWeather = weather
+            }
+        }
+    }
+
     var departure by mutableStateOf(prefs.getString("preferred_departure", "") ?: "")
     var destination by mutableStateOf("")
     var destinationAirport by mutableStateOf("")
