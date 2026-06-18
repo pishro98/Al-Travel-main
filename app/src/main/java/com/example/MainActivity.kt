@@ -153,6 +153,22 @@ class TravelViewModel(application: android.app.Application) : androidx.lifecycle
         }
     }
 
+    var liveFlights by mutableStateOf<com.example.service.GoogleFlightsResponse?>(null)
+    var flightError by mutableStateOf<String?>(null)
+    
+    fun fetchLiveFlights(dep: String, arr: String, date: String) {
+        viewModelScope.launch {
+            flightError = null
+            liveFlights = null
+            val result = com.example.service.FlightService().searchFlights(dep, arr, date)
+            result.onSuccess {
+                liveFlights = it
+            }.onFailure {
+                flightError = it.message ?: "Ein unbekannter Fehler ist aufgetreten."
+            }
+        }
+    }
+
     var departure by mutableStateOf(prefs.getString("preferred_departure", "") ?: "")
     var destination by mutableStateOf("")
     var destinationAirport by mutableStateOf("")
@@ -896,7 +912,7 @@ fun ErrorScreen(message: String, onRetry: () -> Unit) {
 @Composable
 fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: () -> Unit) {
     val context = LocalContext.current
-    val tabs = remember { listOf("Übersicht", "Flüge", "Unterkünfte", "Aktivitäten", "Tagesplan", "Budget", "Infos") }
+    val tabs = remember { listOf("Übersicht", "Aktivitäten", "Tagesplan", "Budget", "Infos") }
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
     
@@ -1075,12 +1091,10 @@ fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: ()
         ) { page ->
             when(page) {
                 0 -> OverviewTab(plan)
-                1 -> FlightsTab(plan.flights)
-                2 -> HotelsTab(plan.hotels)
-                3 -> ActivitiesTab(plan.activities)
-                4 -> ItineraryTab(plan.itineraryDays)
-                5 -> BudgetTab(plan.budgetBreakdown, plan.totalBudget)
-                6 -> TipsTab(plan.tips)
+                1 -> ActivitiesTab(plan.activities)
+                2 -> ItineraryTab(plan.itineraryDays)
+                3 -> BudgetTab(plan.budgetBreakdown, plan.totalBudget)
+                4 -> TipsTab(plan.tips)
             }
         }
     }

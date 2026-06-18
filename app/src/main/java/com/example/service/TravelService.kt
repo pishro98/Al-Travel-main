@@ -254,12 +254,8 @@ class TravelService {
                     Besonderheiten: $extra
                     
                     Berücksichtige bei deiner Planung:
-                    - HIN- UND RÜCKFLUGEINHEITEN (ROUND-TRIP): Plane Hinflug und Rückflug als Einheit. Bei den Fluginformationen MÜSSEN detaillierte Daten für 'outboundFlight' (Hinflug) und 'returnFlight' (Rückflug) beigefügt werden (Abflughafen, Zielflughafen, Abflugzeit, Ankunftszeit, Dauer, Stops).
-                      * Analysiere die 'Wer'-Eingabe ($group) und ermittle die genaue Anzahl der Passagiere (z.B. "2 Erwachsene" = 2 Personen). Setze dies in 'passengerCount' ein.
-                      * Setze 'isRoundTrip' auf true.
-                      * Setze 'price' auf den Preis pro Person (z.B. "350 €").
-                      * Berechne 'totalPrice' als Gesamtpreis für alle Personen zusammengerechnet (z.B. "700 €" bei 2 Personen).
-                    - Hotels: Analysiere nach Lage, Sicherheit, Preis. Empfehle das beste Preis-Leistungs-Hotel, Familien-/Luxushotel.
+                    - HIN- UND RÜCKFLUGEINHEITEN: VERALTET. Die Flugbuchung erfolgt LIVE über die App. Generiere KEINE Flug-Objekte für 'flights' (Array immer leer lassen). Setze das Feld 'flightBudget' in overview als reine Schätzung für die Budgetplanung ein.
+                    - Hotels: VERALTET. Die Hotelsuche erfolgt LIVE über die App. Generiere KEINE Hotel-Objekte für 'hotels' (Array immer leer lassen). Setze das Feld 'hotelBudget' in overview.
                     - Tagesplanung: Intelligente Routen, berücksichtige Öffnungszeiten und Entfernungen. Vermeide unnötige Wege.
                     - Lokale Empfehlungen: Lokale Geheimtipps, authentische Erlebnisse. Vermeide Touristenfallen.
                     - Budget: Aufgeschlüsselte realistische Kosten für Flug, Hotel, Transport etc.
@@ -269,8 +265,8 @@ class TravelService {
                     
                     WICHTIG: Antworte AUSSCHLIESSLICH mit gültigem JSON nach dem vorgegebenen Schema. Alle Texte auf DEUTSCH.
                     Um das Token-Limit NIEMALS zu überschreiten, halte dich an diese STRENGEN GRÖSSEN- UND LÄNGENLIMITS, aber erfülle die gewünschte Menge:
-                    1. Flug: Generiere GENAU 3 Flug-Objekte.
-                    2. Hotels: Generiere GENAU 5 Hotels.
+                    1. Flug: KEINE echten Daten einpflegen. 'flights' MUSS zwingend leer sein ([]).
+                    2. Hotels: KEINE echten Hotelnamen einpflegen. 'hotels' MUSS zwingend leer sein ([]).
                     3. Aktivitäten: Generiere MAXIMAL 5 Aktivitäten.
                     4. Tagesplanung (itineraryDays): Generiere für JEDEN TAG der GESAMTEN Reisedauer ($dates) einen Tagesplan!
                     5. Wetter (weatherForecast): Generiere eine Vorhersage für die GESAMTE Reisedauer in 'forecastDays'.

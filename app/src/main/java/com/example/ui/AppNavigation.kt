@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -87,6 +88,9 @@ fun MainApp(viewModel: TravelViewModel) {
                 composable("profile") {
                     ProfileScreen(viewModel)
                 }
+                composable("flights") {
+                    FlightSearchScreen(viewModel, navController)
+                }
                 composable("weather") {
                     WeatherScreen(viewModel, navController)
                 }
@@ -106,6 +110,7 @@ fun SideNavigationRail(navController: NavHostController) {
     val items = remember {
         listOf(
             NavigationItem("home", "Home", Icons.Default.Home),
+            NavigationItem("flights", "Flüge", Icons.Default.FlightTakeoff),
             NavigationItem("trips", "Reisen", Icons.Default.Flight),
             NavigationItem("weather", "Wetter", Icons.Default.LocationOn),
             NavigationItem("budget", "Budget", Icons.Default.ShoppingCart),
@@ -151,6 +156,7 @@ fun BottomNavigationBar(navController: NavHostController) {
     val items = remember {
         listOf(
             NavigationItem("home", "Home", Icons.Default.Home),
+            NavigationItem("flights", "Flüge", Icons.Default.FlightTakeoff),
             NavigationItem("trips", "Reisen", Icons.Default.Flight),
             NavigationItem("weather", "Wetter", Icons.Default.LocationOn),
             NavigationItem("budget", "Budget", Icons.Default.ShoppingCart),

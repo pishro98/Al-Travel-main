@@ -97,6 +97,109 @@ fun BudgetScreen(navController: NavHostController) {
 }
 
 @Composable
+fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostController) {
+    var origin by remember { mutableStateOf("CDG") }
+    var destination by remember { mutableStateOf("AUS") }
+    var date by remember { mutableStateOf("2026-03-03") }
+    
+    val flights = viewModel.liveFlights
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Flugsuche (Live)", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = origin,
+                onValueChange = { origin = it },
+                label = { Text("Von") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            OutlinedTextField(
+                value = destination,
+                onValueChange = { destination = it },
+                label = { Text("Nach") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = date,
+            onValueChange = { date = it },
+            label = { Text("Datum (YYYY-MM-DD)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = { viewModel.fetchLiveFlights(origin, destination, date) },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.Search, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Flüge suchen")
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        if (viewModel.flightError != null) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = viewModel.flightError ?: "",
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        } else if (flights != null) {
+            val bestFlights = flights.best_flights ?: emptyList()
+            if (bestFlights.isEmpty()) {
+                Text("Keine Flüge gefunden.")
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    item {
+                        Text("Beste Flüge", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    }
+                    items(bestFlights.size) { index ->
+                        val flight = bestFlights[index]
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                    Text("${flight.price} €", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Text("${flight.total_duration.div(60)}h ${flight.total_duration.rem(60)}m", style = MaterialTheme.typography.bodyMedium)
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                flight.flights.forEachIndexed { i, leg ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(leg.departure_airport.id, fontWeight = FontWeight.Bold)
+                                        Icon(Icons.Default.ArrowRightAlt, contentDescription = "to", modifier = Modifier.padding(horizontal = 8.dp))
+                                        Text(leg.arrival_airport.id, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        Text(leg.airline, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    if (i < flight.flights.size - 1) {
+                                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun DocsScreen(navController: NavHostController) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Dokumente", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
