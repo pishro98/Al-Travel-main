@@ -15,8 +15,8 @@ android {
     applicationId = "com.aistudio.travelconcierge.jxhgkz"
     minSdk = 24
     targetSdk = 36
-    versionCode = 5
-    versionName = "5.0"
+    versionCode = 7
+    versionName = "7.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -45,7 +45,7 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
+      // uses Android default debug signing
     }
   }
   compileOptions {
@@ -118,4 +118,65 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+}
+
+tasks.register("extractClasses") {
+    doLast {
+        val file = file("src/main/java/com/example/MainActivity.kt")
+        val content = file.readText()
+        
+        val importsContent = content.substringBefore("// --- Travel Data Models ---")
+            .split("\n").filter { it.trim().startsWith("import ") }.joinToString("\n")
+        
+        val viewmodelRegex = Regex("// --- ViewModel ---\\s*\\n([\\s\\S]*?)\\n// --- UI Components ---")
+        val viewmodelContent = viewmodelRegex.find(content)?.groupValues?.get(1) ?: ""
+        
+        val uiRegex = Regex("// --- UI Components ---\\s*\\n([\\s\\S]*?)\\n// --- Main App Logic ---")
+        val uiContent = uiRegex.find(content)?.groupValues?.get(1) ?: ""
+        
+        // Write viewmodel
+        val viewmodelFile = File(file.parentFile, "TravelViewModel.kt")
+        viewmodelFile.writeText("package com.example\n\n${"$"}importsContent\nimport com.example.model.*\n\n${"$"}viewmodelContent\n")
+        
+        // Write ui components
+        val uiDir = File(file.parentFile, "ui")
+        uiDir.mkdirs()
+        val uiFile = File(uiDir, "TravelComponents.kt")
+        uiFile.writeText("package com.example.ui\n\n${"$"}importsContent\nimport com.example.model.*\nimport com.example.*\n\n${"$"}uiContent\n")
+        
+        // Replace MainActivity.kt
+        val mainFileText = """package com.example
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.MainApp
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            MyApplicationTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val viewModel: TravelViewModel = viewModel()
+                    MainApp(viewModel)
+                }
+            }
+        }
+    }
+}
+"""
+        file.writeText(mainFileText)
+    }
 }

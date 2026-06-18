@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.navigation.NavHostController
 import com.example.TravelViewModel
-import com.example.IosTextField
 
 @Composable
 fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
@@ -81,53 +80,59 @@ fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
                 Text("Quick Actions", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-                    QuickActionCard(icon = Icons.Default.Flight, title = "Flug suchen", modifier = Modifier.weight(1f)) {
-                        navController.navigate("agent")
+                    QuickActionCard(icon = Icons.Default.FlightTakeoff, title = "Flug suchen", modifier = Modifier.weight(1f)) {
+                        navController.navigate("flights")
                     }
-                    QuickActionCard(icon = Icons.Default.Hotel, title = "Hotel suchen", modifier = Modifier.weight(1f)) {
+                    QuickActionCard(icon = Icons.Default.SmartToy, title = "KI-Planer", modifier = Modifier.weight(1f)) {
                         navController.navigate("agent")
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(32.dp))
-                
-                Text("Aktuelle Empfehlungen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
             }
             
-            val recommendations = remember {
-                listOf(
-                    RecommendationItem("Japan", "7 Tage Japan", "Ab 1200€"),
-                    RecommendationItem("Spanien", "Familienurlaub Spanien", "Wellness & Strand")
-                )
-            }
-            
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                items(recommendations) { item ->
-                    Card(
-                        shape = RoundedCornerShape(24.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier
-                            .width(260.dp)
-                            .height(180.dp)
-                            .clickable {
-                                viewModel.destination = item.searchQuery
-                                viewModel.updateSuggestedAirportForDestination(item.searchQuery)
-                                navController.navigate("agent")
-                            }
+            // AI-powered suggestions section (replaces separate DiscoverScreen)
+            if (viewModel.userProfileHome.isNotBlank()) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-                            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                                Text(item.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                SuggestionChip(
-                                    onClick = { },
-                                    label = { Text(item.subtitle, fontWeight = FontWeight.SemiBold) }
-                                )
+                        Text(
+                            "Vorschläge für dich",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (viewModel.suggestionsLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        }
+                    }
+                }
+                if (viewModel.suggestions.isNotEmpty()) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        items(viewModel.suggestions) { suggestion ->
+                            Card(
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier.width(260.dp).height(180.dp).clickable {
+                                    viewModel.setBriefingState()
+                                    viewModel.destination = suggestion.destination
+                                    navController.navigate("agent")
+                                }
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                                    Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                                        Text(suggestion.destination, fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleLarge)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(suggestion.subtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
                             }
                         }
                     }
@@ -332,94 +337,41 @@ fun TripsScreen(navController: NavHostController, viewModel: TravelViewModel) {
     }
 }
 
+
+
 @Composable
-fun DiscoverScreen(viewModel: TravelViewModel, navController: androidx.navigation.NavController) {
-    androidx.compose.runtime.LaunchedEffect(viewModel.userProfileHome) {
-        if (viewModel.userProfileHome.isNotBlank()) {
-            viewModel.fetchSuggestions()
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 600.dp)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.Explore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Entdecken", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (viewModel.userProfileHome.isBlank()) {
-                Text(
-                    "Bitte trage deine Heimatstadt im Profil ein, um maßgeschneiderte Reisevorschläge zu erhalten.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { navController.navigate("profile") }) {
-                    Text("Zum Profil")
-                }
-            } else if (viewModel.suggestionsLoading) {
-                Spacer(modifier = Modifier.height(32.dp))
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Generiere Vorschläge ab ${viewModel.userProfileHome}...")
-            } else if (viewModel.suggestions.isNotEmpty()) {
-                Text(
-                    "Reiseideen ab ${viewModel.userProfileHome}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                viewModel.suggestions.forEach { suggestion ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .clickable {
-                                viewModel.setBriefingState()
-                                viewModel.destination = suggestion.destination
-                                navController.navigate("agent") {
-                                    popUpTo("home") { inclusive = false }
-                                }
-                            },
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(suggestion.destination, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            Text(suggestion.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(suggestion.description, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
-            } else {
-                Text(
-                    "Konnte keine Vorschläge generieren. Versuche es später erneut.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { viewModel.fetchSuggestions() }) {
-                    Text("Erneut versuchen")
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+fun ProfileFormContent(viewModel: TravelViewModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        IosTextField(
+            value = viewModel.userProfileHome,
+            onValueChange = { viewModel.updateProfileHome(it) },
+            label = "Heimatort (Stadt)",
+            placeholder = "z.B. Berlin"
+        )
+        IosTextField(
+            value = viewModel.userProfilePreferredDeparture,
+            onValueChange = { viewModel.updateProfilePreferredDeparture(it) },
+            label = "Bevorzugter Abflughafen",
+            placeholder = "z.B. Frankfurt (FRA)"
+        )
+        IosTextField(
+            value = viewModel.userProfileCountry,
+            onValueChange = { viewModel.updateProfileCountry(it) },
+            label = "Wohnort/Heimatland",
+            placeholder = "z.B. Deutschland"
+        )
+        IosTextField(
+            value = viewModel.userProfileAirlines,
+            onValueChange = { viewModel.updateProfileAirlines(it) },
+            label = "Bevorzugte Airlines",
+            placeholder = "z.B. Lufthansa, Emirates"
+        )
+        IosTextField(
+            value = viewModel.userProfileDiet,
+            onValueChange = { viewModel.updateProfileDiet(it) },
+            label = "Besondere Essenswünsche",
+            placeholder = "z.B. Vegetarisch, Halal"
+        )
     }
 }
 
@@ -435,37 +387,17 @@ fun ProfileScreen(viewModel: TravelViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("Profil", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            
-            IosTextField(
-                value = viewModel.userProfileHome,
-                onValueChange = { viewModel.updateProfileHome(it) },
-                label = "Heimatort (Stadt)",
-                placeholder = "z.B. Berlin"
-            )
-            IosTextField(
-                value = viewModel.userProfilePreferredDeparture,
-                onValueChange = { viewModel.updateProfilePreferredDeparture(it) },
-                label = "Bevorzugter Abflughafen",
-                placeholder = "z.B. Frankfurt (FRA)"
-            )
-            IosTextField(
-                value = viewModel.userProfileCountry,
-                onValueChange = { viewModel.updateProfileCountry(it) },
-                label = "Wohnort/Heimatland",
-                placeholder = "z.B. Deutschland"
-            )
-            IosTextField(
-                value = viewModel.userProfileAirlines,
-                onValueChange = { viewModel.updateProfileAirlines(it) },
-                label = "Bevorzugte Airlines",
-                placeholder = "z.B. Lufthansa, Emirates"
-            )
-            IosTextField(
-                value = viewModel.userProfileDiet,
-                onValueChange = { viewModel.updateProfileDiet(it) },
-                label = "Besondere Essenswünsche",
-                placeholder = "z.B. Vegetarisch, Halal"
-            )
+            ProfileFormContent(viewModel)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { viewModel.saveProfile() },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Profil speichern", fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

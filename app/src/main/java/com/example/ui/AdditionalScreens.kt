@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,47 +61,16 @@ fun WeatherScreen(viewModel: TravelViewModel, navController: NavHostController) 
     }
 }
 
-@Composable
-fun BudgetScreen(navController: NavHostController) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Reisebudget", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Gesamtbudget: 2500 €", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(progress = { 0.4f }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("1000 € von 2500 € ausgegeben", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("✈️ Flüge", fontWeight = FontWeight.SemiBold); Text("400 €")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("🏨 Hotels", fontWeight = FontWeight.SemiBold); Text("500 €")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("🍽️ Essen", fontWeight = FontWeight.SemiBold); Text("100 €")
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        FloatingActionButton(onClick = {}, modifier = Modifier.align(Alignment.End)) {
-            Icon(Icons.Default.Add, contentDescription = "Ausgabe hinzufügen")
-        }
-    }
-}
+
 
 @Composable
 fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostController) {
-    var origin by remember { mutableStateOf("CDG") }
-    var destination by remember { mutableStateOf("AUS") }
-    var date by remember { mutableStateOf("2026-03-03") }
+    var origin by remember { mutableStateOf(viewModel.departure.ifBlank { "" }) }
+    var destination by remember { mutableStateOf(
+        if (viewModel.destinationAirport.isNotBlank()) viewModel.destinationAirport
+        else viewModel.destination.ifBlank { "" }
+    ) }
+    var date by remember { mutableStateOf("") }
     
     val flights = viewModel.liveFlights
 
@@ -181,13 +151,13 @@ fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostControl
                                 flight.flights.forEachIndexed { i, leg ->
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(leg.departure_airport.id, fontWeight = FontWeight.Bold)
-                                        Icon(Icons.Default.ArrowRightAlt, contentDescription = "to", modifier = Modifier.padding(horizontal = 8.dp))
+                                        Icon(Icons.AutoMirrored.Filled.ArrowRightAlt, contentDescription = "to", modifier = Modifier.padding(horizontal = 8.dp))
                                         Text(leg.arrival_airport.id, fontWeight = FontWeight.Bold)
                                         Spacer(modifier = Modifier.weight(1f))
                                         Text(leg.airline, style = MaterialTheme.typography.bodySmall)
                                     }
                                     if (i < flight.flights.size - 1) {
-                                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                     }
                                 }
                             }
@@ -199,34 +169,4 @@ fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostControl
     }
 }
 
-@Composable
-fun DocsScreen(navController: NavHostController) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Dokumente", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(3) { index ->
-                Card(shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(if(index==0) "Flugticket_Lufthansa.pdf" else if (index==1) "Booking_Bestätigung.pdf" else "Reisepass_Kopie.pdf", fontWeight = FontWeight.SemiBold)
-                            Text("Hinzugefügt: Heute", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Default.Upload, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Dokument hochladen")
-        }
-    }
-}
+

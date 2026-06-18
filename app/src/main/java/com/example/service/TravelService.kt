@@ -1,7 +1,7 @@
 package com.example.service
 
 import com.example.BuildConfig
-import com.example.TravelPlan
+import com.example.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -381,7 +381,7 @@ class TravelService {
         }
     }
 
-    suspend fun generateSuggestions(homeCity: String): Result<List<com.example.DestinationSuggestion>> {
+    suspend fun generateSuggestions(homeCity: String): Result<List<DestinationSuggestion>> {
         return withContext(Dispatchers.IO) {
             try {
                 val prompt = """
@@ -420,7 +420,7 @@ class TravelService {
                                 ?: throw Exception("Leeres Ergebnis von der API")
                             
                             val jsonParser = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; isLenient = true }
-                            val suggestions = jsonParser.decodeFromString<List<com.example.DestinationSuggestion>>(text)
+                            val suggestions = jsonParser.decodeFromString<List<DestinationSuggestion>>(text)
                             
                             return@withContext Result.success(suggestions)
                         } catch (e: retrofit2.HttpException) {
