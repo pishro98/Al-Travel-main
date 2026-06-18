@@ -314,7 +314,7 @@ class TravelService {
 
                 for (modelName in modelsToTry) {
                     var attempt = 0
-                    val maxAttemptsForModel = 2
+                    val maxAttemptsForModel = 3
                     while (attempt < maxAttemptsForModel) {
                         try {
                             android.util.Log.d("TravelService", "Versuche Modell: $modelName (Versuch ${attempt + 1})")
@@ -353,7 +353,7 @@ class TravelService {
                             android.util.Log.w("TravelService", "Fehler bei $modelName: Code ${e.code()}")
                             if (e.code() == 503 || e.code() == 429) {
                                 attempt++
-                                kotlinx.coroutines.delay(1500L * attempt)
+                                kotlinx.coroutines.delay(3000L * attempt)
                             } else if (e.code() == 400) {
                                 throw Exception("API Schema Fehler 400: ${e.response()?.errorBody()?.string()}")
                             } else {
@@ -411,18 +411,32 @@ class TravelService {
                 val modelsToTry = listOf("gemini-3.5-flash", "gemini-3.1-pro-preview")
 
                 for (modelName in modelsToTry) {
-                    try {
-                        val response = RetrofitClient.service.generateContent(modelName, apiKey, requestBody)
-                        val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                            ?: throw Exception("Leeres Ergebnis von der API")
-                        
-                        val jsonParser = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; isLenient = true }
-                        val suggestions = jsonParser.decodeFromString<List<com.example.DestinationSuggestion>>(text)
-                        
-                        return@withContext Result.success(suggestions)
-                    } catch (e: Exception) {
-                        lastException = e
-                        android.util.Log.w("TravelService", "API Fehler bei $modelName für Vorschläge", e)
+                    var attempt = 0
+                    val maxAttemptsForModel = 2
+                    while (attempt < maxAttemptsForModel) {
+                        try {
+                            val response = RetrofitClient.service.generateContent(modelName, apiKey, requestBody)
+                            val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                                ?: throw Exception("Leeres Ergebnis von der API")
+                            
+                            val jsonParser = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; isLenient = true }
+                            val suggestions = jsonParser.decodeFromString<List<com.example.DestinationSuggestion>>(text)
+                            
+                            return@withContext Result.success(suggestions)
+                        } catch (e: retrofit2.HttpException) {
+                            lastException = e
+                            if (e.code() == 503 || e.code() == 429) {
+                                attempt++
+                                kotlinx.coroutines.delay(2000L * attempt)
+                            } else {
+                                break
+                            }
+                        } catch (e: Exception) {
+                            lastException = e
+                            attempt++
+                            kotlinx.coroutines.delay(1000L * attempt)
+                            android.util.Log.w("TravelService", "API Fehler bei $modelName für Vorschläge", e)
+                        }
                     }
                 }
                 
