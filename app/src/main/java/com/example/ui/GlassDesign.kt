@@ -12,6 +12,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.text.font.FontWeight
 
 // ── Core glass colors ──────────────────────────────────────────
 val GlassWhite    = Color.White.copy(alpha = 0.18f)
@@ -33,49 +38,21 @@ fun GlassCard(
     alpha: Float = 0.18f,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val glassColor = if (MaterialTheme.colorScheme.background.luminance() > 0.5f)
-        Color.White.copy(alpha = alpha)
-    else
-        Color.White.copy(alpha = alpha * 0.6f)
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val solidColor = if (isLight) Color(0xFFF7F7F9) else Color(0xFF282A3A)
+    val borderColor = if (isLight) Color(0xFFE0E0E0) else Color(0xFF3F415A)
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        glassColor,
-                        glassColor.copy(alpha = alpha * 0.5f)
-                    )
-                )
-            )
+            .background(solidColor)
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        GlassBorder,
-                        GlassBorder.copy(alpha = 0.1f)
-                    )
-                ),
+                color = borderColor,
                 shape = RoundedCornerShape(cornerRadius)
-            )
-            .applyBlur(12f),
+            ),
         content = content
     )
-}
-
-// ── Blur modifier: real blur on Android 12+, clean fallback ────
-fun Modifier.applyBlur(radius: Float): Modifier {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        this.graphicsLayer {
-            renderEffect = android.graphics.RenderEffect
-                .createBlurEffect(radius, radius, android.graphics.Shader.TileMode.CLAMP)
-                .asComposeRenderEffect()
-        }
-    } else {
-        // Fallback: slightly more opaque surface for older devices
-        this.background(Color.White.copy(alpha = 0.08f))
-    }
 }
 
 // ── FloatingGlassNavBar: the iOS 26-style floating tab bar ─────
@@ -86,33 +63,15 @@ fun FloatingGlassNavBar(
 ) {
     Box(
         modifier = modifier
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
             .fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(32.dp))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF1E1E3A).copy(alpha = 0.85f),
-                            Color(0xFF12122A).copy(alpha = 0.92f)
-                        )
-                    )
-                )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.25f),
-                            Color.White.copy(alpha = 0.05f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(32.dp)
-                )
-                .applyBlur(20f)
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .clip(RoundedCornerShape(percent = 50))
+                .background(Color(0xFFF0F0F5)) // Matte background
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             content()
@@ -120,7 +79,47 @@ fun FloatingGlassNavBar(
     }
 }
 
-// ── GlassScrim: transparent gradient overlay for hero sections ─
+@Composable
+fun IosTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    readOnly: Boolean = false,
+    enabled: Boolean = true
+) {
+    Column(modifier = modifier) {
+        if (label.isNotBlank()) {
+            Text(
+                text = label.uppercase(),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
+            )
+        }
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholder, color = Color.White.copy(alpha = 0.5f)) },
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF3F415A)),
+            readOnly = readOnly,
+            enabled = enabled,
+            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = AccentBlue,
+                disabledContainerColor = Color.Transparent,
+                disabledTextColor = Color.White
+            )
+        )
+    }
+}
 @Composable
 fun GlassScrim(modifier: Modifier = Modifier) {
     Box(

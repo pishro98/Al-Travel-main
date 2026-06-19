@@ -34,7 +34,17 @@ import com.example.model.*
 @Composable
 fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: () -> Unit) {
     val context = LocalContext.current
-    val tabs = remember { listOf("Übersicht", "Aktivitäten", "Tagesplan", "Budget", "Infos") }
+    val tabs = remember(plan.flights, plan.hotels) {
+        buildList {
+            add("Übersicht")
+            if (plan.flights.isNotEmpty()) add("Flüge")
+            if (plan.hotels.isNotEmpty()) add("Hotels")
+            add("Aktivitäten")
+            add("Tagesplan")
+            add("Budget")
+            add("Infos")
+        }
+    }
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
     
@@ -56,8 +66,11 @@ fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: ()
         context.startActivity(android.content.Intent.createChooser(intent, "Reiseplan teilen"))
     }
     
-    Scaffold(
-        topBar = {
+    Box(
+        modifier = Modifier.fillMaxSize().background(brush = GradientTravel), 
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Column {
                 if (isCached) {
                     Surface(
@@ -75,99 +88,70 @@ fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: ()
                         )
                     }
                 }
-                // Hero Banner - Sleek UI Style
-                Surface(
-                    modifier = Modifier.fillMaxWidth().height(220.dp),
-                    shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
-                    color = MaterialTheme.colorScheme.primary, // #0059B2
-                    shadowElevation = 8.dp
+                
+                // Hero Section - Transparent Glass Style
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(220.dp)
                 ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        // Radial Gradients (opacity 20%)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(Color.White.copy(alpha = 0.2f), Color.Transparent),
-                                        center = androidx.compose.ui.geometry.Offset(200f, 150f),
-                                        radius = 400f
-                                    )
-                                )
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(Color(0xFFFFD700).copy(alpha = 0.2f), Color.Transparent),
-                                        center = androidx.compose.ui.geometry.Offset(800f, 300f),
-                                        radius = 500f
-                                    )
-                                )
-                        )
-                        
-                        // Content
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(24.dp)
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.Bottom
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
+                            Surface(
+                                color = Color.White.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(50),
                             ) {
+                                Text(
+                                    "KI REISEPLANER",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 2.sp,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Surface(
                                     color = Color.White.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(50),
+                                    modifier = Modifier.size(40.dp).clickable { onEditClick() }
                                 ) {
-                                    Text(
-                                        "PERSONAL CONCIERGE",
-                                        color = Color.White,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 2.sp,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                                    )
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Surface(
-                                        color = Color.White.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(50),
-                                        modifier = Modifier.size(40.dp).clickable { onEditClick() }
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Default.Edit, contentDescription = "Bearbeiten", tint = Color.White, modifier = Modifier.size(20.dp))
-                                        }
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Bearbeiten", tint = Color.White, modifier = Modifier.size(20.dp))
                                     }
-                                    Surface(
-                                        color = Color.White.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(50),
-                                        modifier = Modifier.size(40.dp).clickable { sharePlan() }
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Default.Share, contentDescription = "Teilen", tint = Color.White, modifier = Modifier.size(20.dp))
-                                        }
+                                }
+                                Surface(
+                                    color = Color.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(50),
+                                    modifier = Modifier.size(40.dp).clickable { sharePlan() }
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Share, contentDescription = "Teilen", tint = Color.White, modifier = Modifier.size(20.dp))
                                     }
                                 }
                             }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Text(
-                                plan.destination.uppercase(),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                letterSpacing = (-1).sp
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(plan.totalBudget, color = MaterialTheme.colorScheme.primaryContainer, fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                                Text(" • Budget Option", color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f), fontSize = 14.sp)
-                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            plan.destination.uppercase(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            letterSpacing = (-1).sp
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(plan.totalBudget, color = AccentBlue, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                            Text(" • Budgetoption", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
                         }
                     }
                 }
@@ -179,35 +163,39 @@ fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: ()
                         if (pagerState.currentPage < tabPositions.size) {
                             SecondaryIndicator(
                                 modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                                color = MaterialTheme.colorScheme.primary,
+                                color = AccentBlue,
                                 height = 3.dp
                             )
                         }
-                    }
+                    },
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White
                 ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
-                            text = { Text(title, fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal) }
+                            text = { Text(title, fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal, color = if (pagerState.currentPage == index) AccentBlue else Color.White) }
                         )
                     }
                 }
             }
-        }
-    ) { padding ->
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) { page ->
-            when(page) {
-                0 -> OverviewTab(plan)
-                1 -> ActivitiesTab(plan.activities, plan.destination)
-                2 -> ItineraryTab(plan.itineraryDays)
-                3 -> BudgetTab(plan.budgetBreakdown, plan.totalBudget)
-                4 -> TipsTab(plan.tips)
+            
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) { page ->
+                val tabName = tabs.getOrNull(page) ?: ""
+                when (tabName) {
+                    "Übersicht"    -> OverviewTab(plan)
+                    "Flüge"        -> FlightsTab(plan.flights)
+                    "Hotels"       -> HotelsTab(plan.hotels)
+                    "Aktivitäten"  -> ActivitiesTab(plan.activities, plan.destination)
+                    "Tagesplan"    -> ItineraryTab(plan.itineraryDays)
+                    "Budget"       -> BudgetTab(plan.budgetBreakdown, plan.totalBudget)
+                    "Infos"        -> TipsTab(plan.tips)
+                }
             }
         }
     }

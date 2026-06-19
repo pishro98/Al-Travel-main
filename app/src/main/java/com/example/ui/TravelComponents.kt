@@ -81,12 +81,12 @@ fun LoadingScreen() {
                 modifier = Modifier
                     .size(48.dp)
                     .offset(y = translationY.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = AccentBlue
             )
             CircularProgressIndicator(
                 modifier = Modifier.size(120.dp),
                 strokeWidth = 4.dp,
-                color = MaterialTheme.colorScheme.primary,
+                color = AccentBlue,
                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
         }
@@ -97,7 +97,7 @@ fun LoadingScreen() {
             "Reiseplan wird generiert",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = Color.White
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -110,7 +110,7 @@ fun LoadingScreen() {
             Text(
                 steps[targetIndex],
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.7f),
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
@@ -120,34 +120,37 @@ fun LoadingScreen() {
 
 @Composable
 fun ErrorScreen(message: String, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Default.Warning,
-            contentDescription = "Error",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "Da lief etwas schief.",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            message,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onRetry, shape = RoundedCornerShape(14.dp), modifier = Modifier.height(50.dp)) {
-            Text("Zurück zur Planung", fontWeight = FontWeight.SemiBold)
+    Box(modifier = Modifier.fillMaxSize().background(brush = GradientTravel)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                Icons.Default.Warning,
+                contentDescription = "Error",
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "Da lief etwas schief.",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                message,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onRetry, shape = RoundedCornerShape(14.dp), modifier = Modifier.height(50.dp)) {
+                Text("Zurück zur Planung", fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

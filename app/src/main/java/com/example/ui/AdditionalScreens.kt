@@ -26,38 +26,72 @@ fun WeatherScreen(viewModel: TravelViewModel, navController: NavHostController) 
     var city by remember { mutableStateOf("") }
     val weather = viewModel.liveWeather
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Wetter (Live)", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = city,
-            onValueChange = { city = it },
-            label = { Text("Stadt eingeben") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = { viewModel.fetchLiveWeather(city) },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(12.dp)
+    Box(modifier = Modifier.fillMaxSize().background(brush = GradientTravel)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(bottom = 100.dp)
         ) {
-            Text("Wetter abrufen")
-        }
+            Text(
+                "Wetter (Live)",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        if (weather != null) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text("Aktuelles Wetter in $city", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("${weather.current_weather?.temperature ?: "--"}°C", fontSize = 48.sp, fontWeight = FontWeight.Bold)
-                    Text("Windgeschw.: ${weather.current_weather?.windspeed ?: "--"} km/h", style = MaterialTheme.typography.bodyLarge)
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    OutlinedTextField(
+                        value = city,
+                        onValueChange = { city = it },
+                        label = { Text("Stadt eingeben", color = Color.White) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AccentBlue,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { viewModel.fetchLiveWeather(city) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Wetter abrufen", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (weather != null) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            "Aktuelles Wetter in $city",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "${weather.current_weather?.temperature ?: "--"}°C",
+                            fontSize = 56.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentBlue
+                        )
+                        Text(
+                            "Wind: ${weather.current_weather?.windspeed ?: "--"} km/h",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
                 }
             }
         }
@@ -78,6 +112,23 @@ fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostControl
     val flights = viewModel.liveFlights
     val context = LocalContext.current
 
+    var showFlightDatePicker by remember { mutableStateOf(false) }
+
+    if (showFlightDatePicker) {
+        val calendar = java.util.Calendar.getInstance()
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, day ->
+                date = "%04d-%02d-%02d".format(year, month + 1, day)
+                showFlightDatePicker = false
+            },
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH),
+            calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        ).show()
+        showFlightDatePicker = false
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(brush = GradientTravel)) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(bottom = 100.dp)) {
             Text("Flugsuche (Live)", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color.White)
@@ -86,44 +137,41 @@ fun FlightSearchScreen(viewModel: TravelViewModel, navController: NavHostControl
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
+                        IosTextField(
                             value = origin,
                             onValueChange = { origin = it },
-                            label = { Text("Von", color = Color.White) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AccentBlue,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                            )
+                            label = "Von",
+                            placeholder = "MUC",
+                            modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        IosTextField(
                             value = destination,
                             onValueChange = { destination = it },
-                            label = { Text("Nach", color = Color.White) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AccentBlue,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                            )
+                            label = "Nach",
+                            placeholder = "BER",
+                            modifier = Modifier.weight(1f)
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = date,
-                        onValueChange = { date = it },
-                        label = { Text("Datum (YYYY-MM-DD)", color = Color.White) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AccentBlue,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                    Box(modifier = Modifier.fillMaxWidth().clickable { showFlightDatePicker = true }) {
+                        OutlinedTextField(
+                            value = date,
+                            onValueChange = { },
+                            label = { Text("Abflugdatum", color = Color.White) },
+                            placeholder = { Text("Tippen zum Auswählen", color = Color.White.copy(alpha = 0.5f)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = false,
+                            readOnly = true,
+                            shape = RoundedCornerShape(12.dp),
+                            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledBorderColor = Color.White.copy(alpha = 0.5f),
+                                disabledTextColor = Color.White,
+                                disabledLabelColor = Color.White,
+                                disabledPlaceholderColor = Color.White.copy(alpha = 0.5f)
+                            )
                         )
-                    )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { viewModel.fetchLiveFlights(origin, destination, date) },

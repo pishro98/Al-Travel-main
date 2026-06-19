@@ -254,24 +254,23 @@ class TravelService {
                     Besonderheiten: $extra
                     
                     Berücksichtige bei deiner Planung:
-                    - Flüge: Die App lädt ECHTE Flugdaten nach. Lasse 'flights' leer ([]). Nutze 'overview.flightBudget' für eine realistische Schätzung.
-                    - Hotels: Die App lädt ECHTE Hoteldaten nach. Lasse 'hotels' leer ([]). Nutze 'overview.hotelBudget' für eine realistische Schätzung.
-                    - Wetter: Die App lädt ECHTES Wetter über Open-Meteo nach. Das 'weatherForecast' Feld kann trotzdem eine KI-Einschätzung enthalten, wird aber von Echtdaten überschrieben.
-                    - Tagesplanung: Intelligente Routen, berücksichtige Öffnungszeiten und Entfernungen. Vermeide unnötige Wege.
+                    - Flüge: Generiere realistische Flugverbindungen im Array 'flights'. Falls keine echten Daten vorliegen, sei kreativ (z.B. realistische Airline, Zeiten).
+                    - Hotels: Generiere 3 passgenaue, realistische Hotel-Optionen im Array 'hotels'.
+                    - Tagesplanung: Generiere eine tagesgenaue Planung für JEDEN Tag, den die Reise dauert. Nimm im Zweifel an, dass die Reise 3 bis 5 Tage dauert, falls $dates unklar ist.
                     - Lokale Empfehlungen: Lokale Geheimtipps, authentische Erlebnisse. Vermeide Touristenfallen.
                     - Budget: Aufgeschlüsselte realistische Kosten für Flug, Hotel, Transport etc.
-                    - WETTERPROGNOSE: Generiere eine detaillierte, realistische Wetterprognose am Reiseziel für den angegebenen Zeitraum ($dates) in 'weatherForecast'. Biete eine atmosphärische Zusammenfassung, durchschnittliche Temperatur und tägliche Vorhersagen in 'forecastDays' (Nutze für 'icon' Werte wie "sunny", "cloudy", "rainy", "windy", "thunderstorm", "partly_cloudy").
+                    - WETTERPROGNOSE: Generiere eine detaillierte, realistische Wetterprognose am Reiseziel für den angegebenen Zeitraum in 'weatherForecast'.
                     
                     Das 'description' Feld muss eine kompakte, aber expertenhafte Zusammenfassung enthalten: Empfohlene Lösung, Kostenübersicht, Vorteile, Risiken & deine klare KI-Empfehlung (MAXIMAL 2 kurze Sätze!).
                     
                     WICHTIG: Antworte AUSSCHLIESSLICH mit gültigem JSON nach dem vorgegebenen Schema. Alle Texte auf DEUTSCH.
                     Um das Token-Limit NIEMALS zu überschreiten, halte dich an diese STRENGEN GRÖSSEN- UND LÄNGENLIMITS, aber erfülle die gewünschte Menge:
-                    1. Flug: KEINE echten Daten einpflegen. 'flights' MUSS zwingend leer sein ([]).
-                    2. Hotels: KEINE echten Hotelnamen einpflegen. 'hotels' MUSS zwingend leer sein ([]).
-                    3. Aktivitäten: Generiere MAXIMAL 5 Aktivitäten.
-                    4. Tagesplanung (itineraryDays): Generiere für JEDEN TAG der GESAMTEN Reisedauer ($dates) einen Tagesplan!
-                    5. Wetter (weatherForecast): Generiere eine Vorhersage für die GESAMTE Reisedauer in 'forecastDays'.
-                    6. Tipps: Generiere MAXIMAL 2 Reisetipps.
+                    1. Flug: Generiere mindestens 1-2 realistische Flüge.
+                    2. Hotels: Generiere mindestens 3 realistische Hotels.
+                    3. Aktivitäten: Generiere mindestens 5 Aktivitäten.
+                    4. Tagesplanung (itineraryDays): Generiere für jeden Reisetag (mindestens 3 Tage) einen Plan.
+                    5. Wetter (weatherForecast): Generiere eine Vorhersage für die Reisedauer in 'forecastDays'.
+                    6. Tipps: Generiere 2-3 Reisetipps.
                     
                     STRENGE LÄNGENLIMITS FÜR TEXTE (um Bandbreite und Generationstokens zu sparen):
                     - 'description' im Haupt-Objekt: Max. 2 kurze Sätze.

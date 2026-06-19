@@ -85,10 +85,17 @@ class FlightService {
                 return@withContext Result.failure(Exception("Bitte fügen Sie einen SerpApi-Schlüssel in den AI Studio Secrets (bzw. local.properties/.env) unter dem Namen SERP_API_KEY hinzu, um Echtdaten abzurufen."))
             }
             
+            // Normalize date format from DD.MM.YYYY, YYYY.MM.DD to YYYY-MM-DD
+            val parts = date.trim().split(Regex("[.-]"))
+            val isoDate = if (parts.size == 3) {
+                if (parts[0].length == 4) "${parts[0]}-${parts[1]}-${parts[2]}"
+                else "${parts[2]}-${parts[1]}-${parts[0]}"
+            } else date
+
             val response = FlightClient.api.searchFlights(
                 departureId = departure,
                 arrivalId = arrival,
-                outboundDate = date,
+                outboundDate = isoDate,
                 apiKey = apiKey
             )
             Result.success(response)

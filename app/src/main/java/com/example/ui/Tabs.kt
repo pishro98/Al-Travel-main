@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -237,8 +238,10 @@ fun OverviewTab(plan: TravelPlan) {
                     Text("€${plan.overview.flightBudget + plan.overview.hotelBudget + plan.overview.activityBudget}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
+                val total = (plan.overview.flightBudget + plan.overview.hotelBudget + plan.overview.activityBudget).toFloat()
+                val ratio = if (total > 0f) ((plan.overview.flightBudget + plan.overview.hotelBudget).toFloat() / total).coerceIn(0.05f, 1f) else 0.6f
                 Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.2f))) {
-                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.75f).background(AccentBlue))
+                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(ratio).background(brush = Brush.horizontalGradient(listOf(AccentBlue, AccentPurple))))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("€${plan.overview.bufferBudget} Puffer übrig", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
@@ -306,7 +309,7 @@ fun FlightsTab(flights: List<Flight>) {
                     if (flight.bestPick) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Badge(containerColor = AccentPurple) {
-                            Text("Best Pick", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                            Text("Empfehlung", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -362,16 +365,16 @@ fun HotelsTab(hotels: List<Hotel>) {
                     Text("${hotel.pricePerNight} / Nacht (Gesamt: ${hotel.totalPrice})", fontWeight = FontWeight.Medium, color = Color.White)
                     
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Pros:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text("Vorteile:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
                     hotel.pros.forEach { Text("• $it", fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f)) }
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Cons:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text("Nachteile:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
                     hotel.cons.forEach { Text("• $it", fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f)) }
                     
                     if (hotel.bestPick) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Badge(containerColor = AccentPurple) {
-                            Text("Best Pick", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                            Text("Empfehlung", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -455,7 +458,7 @@ fun ActivitiesTab(activities: List<Activity>, destination: String = "") {
                             if (act.isMustDo) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Badge(containerColor = AccentPurple) {
-                                    Text("Must-Do", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                    Text("Highlight", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                                 }
                             }
                             

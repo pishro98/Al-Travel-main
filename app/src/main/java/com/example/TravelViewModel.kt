@@ -46,11 +46,28 @@ class TravelViewModel(application: Application) : AndroidViewModel(application) 
     var liveFlights by mutableStateOf<com.example.service.GoogleFlightsResponse?>(null)
     var flightError by mutableStateOf<String?>(null)
     
+    private fun normalizeAirportCode(input: String): String {
+        val trimmed = input.trim()
+        if (trimmed.contains("(") && trimmed.contains(")")) {
+            return trimmed.substringAfter("(").substringBefore(")").trim()
+        }
+        val lowercase = trimmed.lowercase()
+        val mapped = airportSuggestionsMap.entries.firstOrNull { 
+            lowercase.contains(it.key) || it.key.startsWith(lowercase)
+        }?.value?.first()
+        if (mapped != null) {
+             return mapped.substringAfter("(").substringBefore(")").trim()
+        }
+        return trimmed.take(3).uppercase()
+    }
+
     fun fetchLiveFlights(dep: String, arr: String, date: String) {
         viewModelScope.launch {
             flightError = null
             liveFlights = null
-            val result = com.example.service.FlightService().searchFlights(dep, arr, date)
+            val normDep = normalizeAirportCode(dep)
+            val normArr = normalizeAirportCode(arr)
+            val result = com.example.service.FlightService().searchFlights(normDep, normArr, date)
             result.onSuccess {
                 liveFlights = it
             }.onFailure {

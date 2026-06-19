@@ -47,12 +47,12 @@ fun FloatingBottomNav(navController: NavController, modifier: Modifier = Modifie
         APP_NAV_ITEMS.forEach { item ->
             val selected = currentRoute == item.route
             val iconColor by animateColorAsState(
-                targetValue = if (selected) AccentBlue else Color.White.copy(alpha = 0.55f),
+                targetValue = if (selected) Color(0xFF6200EA) else Color.Black,
                 animationSpec = tween(300),
                 label = "iconColor"
             )
             val bgAlpha by animateColorAsState(
-                targetValue = if (selected) AccentBlue.copy(alpha = 0.22f) else Color.Transparent,
+                targetValue = if (selected) Color.Black.copy(alpha = 0.08f) else Color.Transparent,
                 animationSpec = tween(300),
                 label = "bgAlpha"
             )
@@ -60,21 +60,21 @@ fun FloatingBottomNav(navController: NavController, modifier: Modifier = Modifie
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(percent = 50))
                     .background(bgAlpha)
                     .clickable { navController.navigate(item.route) {
                         launchSingleTop = true
                         popUpTo("home") { saveState = true }
                         restoreState = true
                     }}
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 10.dp, horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(item.icon, contentDescription = item.label,
-                    tint = iconColor, modifier = Modifier.size(22.dp))
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(item.label, fontSize = 10.sp, color = iconColor,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+                    tint = iconColor, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(item.label, fontSize = 11.sp, color = iconColor,
+                    fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -114,6 +114,30 @@ fun MainApp(viewModel: TravelViewModel) {
             composable("flights") { FlightSearchScreen(viewModel, navController) }
             composable("trips")   { TripsScreen(navController, viewModel) }
             composable("profile") { ProfileScreen(viewModel) }
+            composable("dashboard") {
+                val state by viewModel.uiState.collectAsState()
+                when (val s = state) {
+                    is TravelUiState.Success -> {
+                        androidx.activity.compose.BackHandler {
+                            navController.popBackStack()
+                        }
+                        DashboardScreen(
+                            plan = s.plan,
+                            isCached = s.isCached,
+                            onEditClick = {
+                                viewModel.setBriefingState()
+                                navController.navigate("agent") {
+                                    popUpTo("home") { saveState = false }
+                                }
+                            }
+                        )
+                    }
+                    else -> {
+                        LaunchedEffect(Unit) { navController.navigate("agent") }
+                    }
+                }
+            }
+            composable("weather") { WeatherScreen(viewModel, navController) }
         }
 
         // Floating nav bar hovers above content at bottom

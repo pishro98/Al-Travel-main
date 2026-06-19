@@ -80,14 +80,14 @@ class TravelRepository(
             }
             if (depCode.length == 3 && arrCode.length == 3 && checkIn.isNotBlank()) {
                 flightService.searchFlights(depCode, arrCode, checkIn).getOrNull()
-                    ?.best_flights?.take(3)?.map { bf ->
+                    ?.best_flights?.take(3)?.mapIndexed { index, bf ->
                         val leg = bf.flights.firstOrNull()
                         Flight(
                             airline = leg?.airline ?: "?",
                             price = "${bf.price} €",
                             duration = "${bf.total_duration / 60}h ${bf.total_duration % 60}min",
                             isDirect = bf.flights.size == 1,
-                            bestPick = bf == flightService.searchFlights(depCode, arrCode, checkIn).getOrNull()?.best_flights?.firstOrNull(),
+                            bestPick = index == 0,
                             url = "https://www.google.com/travel/flights",
                             isRoundTrip = true,
                             passengerCount = 1,
@@ -113,14 +113,14 @@ class TravelRepository(
             val checkOut = parseDateToIso(parts.getOrNull(1) ?: "")
             if (checkIn.isNotBlank() && checkOut.isNotBlank()) {
                 com.example.service.HotelService().searchHotels(destinationCity, checkIn, checkOut).getOrNull()
-                    ?.properties?.take(3)?.map { p ->
+                    ?.properties?.take(3)?.mapIndexed { index, p ->
                         Hotel(
                             name = p.name,
                             pricePerNight = p.rate_per_night?.lowest ?: "Preis auf Anfrage",
                             totalPrice = p.total_rate?.lowest ?: "",
                             rating = p.overall_rating?.let { "%.1f".format(it) } ?: "N/A",
                             location = destinationCity,
-                            bestPick = p == com.example.service.HotelService().searchHotels(destinationCity, checkIn, checkOut).getOrNull()?.properties?.firstOrNull(),
+                            bestPick = index == 0,
                             pros = p.amenities?.take(3) ?: emptyList(),
                             cons = emptyList(),
                             url = p.link ?: "https://www.google.com/travel/hotels"
@@ -137,8 +137,16 @@ class TravelRepository(
     }
 
     private fun parseDateToIso(input: String): String {
-        val parts = input.trim().split(".")
-        return if (parts.size == 3) "${parts[2]}-${parts[1]}-${parts[0]}" else input
+        val parts = input.trim().split(Regex("[.-]"))
+        return if (parts.size == 3) {
+            if (parts[0].length == 4) {
+                // Already roughly YYYY MM DD
+                "${parts[0]}-${parts[1]}-${parts[2]}"
+            } else {
+                // Assuming DD MM YYYY
+                "${parts[2]}-${parts[1]}-${parts[0]}"
+            }
+        } else input
     }
     
     private fun wmoCodeToCondition(code: Int) = when (code) {
