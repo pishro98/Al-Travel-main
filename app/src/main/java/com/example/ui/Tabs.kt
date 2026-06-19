@@ -241,7 +241,7 @@ fun OverviewTab(plan: TravelPlan) {
                 val total = (plan.overview.flightBudget + plan.overview.hotelBudget + plan.overview.activityBudget).toFloat()
                 val ratio = if (total > 0f) ((plan.overview.flightBudget + plan.overview.hotelBudget).toFloat() / total).coerceIn(0.05f, 1f) else 0.6f
                 Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.2f))) {
-                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(ratio).background(brush = Brush.horizontalGradient(listOf(AccentBlue, AccentPurple))))
+                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(ratio).background(brush = androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(AccentBlue, AccentPurple))))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("€${plan.overview.bufferBudget} Puffer übrig", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
