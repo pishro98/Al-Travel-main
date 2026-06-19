@@ -204,7 +204,7 @@ fun DashboardScreen(plan: TravelPlan, isCached: Boolean = false, onEditClick: ()
         ) { page ->
             when(page) {
                 0 -> OverviewTab(plan)
-                1 -> ActivitiesTab(plan.activities)
+                1 -> ActivitiesTab(plan.activities, plan.destination)
                 2 -> ItineraryTab(plan.itineraryDays)
                 3 -> BudgetTab(plan.budgetBreakdown, plan.totalBudget)
                 4 -> TipsTab(plan.tips)

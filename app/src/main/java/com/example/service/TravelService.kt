@@ -254,8 +254,9 @@ class TravelService {
                     Besonderheiten: $extra
                     
                     Berücksichtige bei deiner Planung:
-                    - HIN- UND RÜCKFLUGEINHEITEN: VERALTET. Die Flugbuchung erfolgt LIVE über die App. Generiere KEINE Flug-Objekte für 'flights' (Array immer leer lassen). Setze das Feld 'flightBudget' in overview als reine Schätzung für die Budgetplanung ein.
-                    - Hotels: VERALTET. Die Hotelsuche erfolgt LIVE über die App. Generiere KEINE Hotel-Objekte für 'hotels' (Array immer leer lassen). Setze das Feld 'hotelBudget' in overview.
+                    - Flüge: Die App lädt ECHTE Flugdaten nach. Lasse 'flights' leer ([]). Nutze 'overview.flightBudget' für eine realistische Schätzung.
+                    - Hotels: Die App lädt ECHTE Hoteldaten nach. Lasse 'hotels' leer ([]). Nutze 'overview.hotelBudget' für eine realistische Schätzung.
+                    - Wetter: Die App lädt ECHTES Wetter über Open-Meteo nach. Das 'weatherForecast' Feld kann trotzdem eine KI-Einschätzung enthalten, wird aber von Echtdaten überschrieben.
                     - Tagesplanung: Intelligente Routen, berücksichtige Öffnungszeiten und Entfernungen. Vermeide unnötige Wege.
                     - Lokale Empfehlungen: Lokale Geheimtipps, authentische Erlebnisse. Vermeide Touristenfallen.
                     - Budget: Aufgeschlüsselte realistische Kosten für Flug, Hotel, Transport etc.
@@ -353,7 +354,11 @@ class TravelService {
                             android.util.Log.w("TravelService", "Fehler bei $modelName: Code ${e.code()}")
                             if (e.code() == 503 || e.code() == 429) {
                                 attempt++
-                                kotlinx.coroutines.delay(3000L * attempt)
+                                kotlinx.coroutines.delay(5000L * attempt) // Länger warten
+                                if (attempt >= maxAttemptsForModel && modelName == modelsToTry.last()) {
+                                    android.util.Log.w("TravelService", "API Limits reached, returning fallback data")
+                                    return@withContext Result.success(getFallbackPlan(departure, destination, dates))
+                                }
                             } else if (e.code() == 400) {
                                 throw Exception("API Schema Fehler 400: ${e.response()?.errorBody()?.string()}")
                             } else {
@@ -427,7 +432,10 @@ class TravelService {
                             lastException = e
                             if (e.code() == 503 || e.code() == 429) {
                                 attempt++
-                                kotlinx.coroutines.delay(2000L * attempt)
+                                kotlinx.coroutines.delay(4000L * attempt)
+                                if (attempt >= maxAttemptsForModel && modelName == modelsToTry.last()) {
+                                    return@withContext Result.success(getFallbackSuggestions())
+                                }
                             } else {
                                 break
                             }
@@ -445,5 +453,55 @@ class TravelService {
                 Result.failure(e)
             }
         }
+    }
+
+    private fun getFallbackPlan(departure: String, destination: String, dates: String): TravelPlan {
+        return TravelPlan(
+            destination = if (destination.isNotBlank()) destination else "Paris (Fallback-Ziel)",
+            description = "Dieser Plan wurde als Fallback geladen, da das API-Limit erreicht wurde. Er enthält nur Basisdaten.",
+            totalBudget = "700€",
+            overview = Overview(
+                flightBudget = 200,
+                hotelBudget = 400,
+                activityBudget = 0,
+                bufferBudget = 100
+            ),
+            hotels = emptyList(), // Wird später durch LocalSearchService gefüllt
+            activities = listOf(
+                Activity(
+                    title = "Fallback-Aktivität: Stadtrundgang",
+                    description = "Erkunden Sie das Zentrum.",
+                    price = "Kostenlos",
+                    duration = "2 Stunden",
+                    rating = "4.0",
+                    isMustDo = true,
+                    url = "https://www.google.de/search?q=Stadtrundgang+$destination"
+                )
+            ),
+            itineraryDays = listOf(
+                ItineraryDay(
+                    dayNumber = 1,
+                    morning = "Ankunft und Check-in.",
+                    afternoon = "Spaziergang durch die Umgebung.",
+                    evening = "Abendessen im lokalen Restaurant."
+                )
+            ),
+            budgetBreakdown = emptyList(),
+            tips = emptyList(),
+            flights = emptyList(),
+            weatherForecast = WeatherForecast(
+                generalDescription = "Keine Daten vom KI-Modell (Limit erreicht).",
+                averageTemperature = "N/A",
+                forecastDays = emptyList()
+            )
+        )
+    }
+
+    private fun getFallbackSuggestions(): List<DestinationSuggestion> {
+        return listOf(
+            DestinationSuggestion(id = "fallback_1", destination = "Rom", subtitle = "Städtetrip", description = "Historische Stadt.", imageUrl = ""),
+            DestinationSuggestion(id = "fallback_2", destination = "Berlin", subtitle = "Städtetrip", description = "Viel Kultur.", imageUrl = ""),
+            DestinationSuggestion(id = "fallback_3", destination = "Mallorca", subtitle = "Strandurlaub", description = "Entspannung am Meer.", imageUrl = "")
+        )
     }
 }

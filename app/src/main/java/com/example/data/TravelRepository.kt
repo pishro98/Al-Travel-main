@@ -29,99 +29,129 @@ class TravelRepository(
         style: String,
         extra: String
     ): Result<TravelPlan> {
-        val result = travelService.generateTravelPlan(departure, destination, dates, group, budget, style, extra)
+        val aiResult = travelService.generateTravelPlan(departure, destination, dates, group, budget, style, extra)
         
-        return result.map { originalPlan ->
-            var augmentedPlan = originalPlan
+        if (aiResult.isFailure) return aiResult
 
-            // 1. Fetch real Weather Data
-            weatherService.getForecastForCity(destination).onSuccess { weatherResponse ->
-                val daily = weatherResponse.daily
-                if (daily != null && daily.time.isNotEmpty()) {
-                    val days = daily.time.indices.map { i ->
-                        val code = daily.weathercode.getOrNull(i) ?: 0
-                        val maxT = daily.temperature_2m_max.getOrNull(i)?.toInt() ?: 0
-                        val minT = daily.temperature_2m_min.getOrNull(i)?.toInt() ?: 0
-                        val condition = when (code) {
-                            0, 1 -> "Sonnig"
-                            2 -> "Leicht bewölkt"
-                            3 -> "Bewölkt"
-                            45, 48 -> "Nebel"
-                            51, 53, 55, 61, 63, 65 -> "Regen"
-                            71, 73, 75 -> "Schnee"
-                            95, 96, 99 -> "Gewitter"
-                            else -> "Wechselhaft"
-                        }
+        val aiPlan = aiResult.getOrThrow()
+        
+        val finalPlan = enrichPlanWithRealData(aiPlan, dates, departure)
+
+        // Save and return
+        saveCachedPlan(finalPlan)
+        saveToHistory(finalPlan, dates)
+
+        return Result.success(finalPlan)
+    }
+
+    private suspend fun enrichPlanWithRealData(aiPlan: TravelPlan, dates: String, departure: String): TravelPlan {
+        val destinationCity = aiPlan.destination.substringBefore("(").trim()
+        val destinationAirport = aiPlan.destination.substringAfter("(").substringBefore(")").trim()
+
+        // --- REAL WEATHER (Open-Meteo, free, no API key required) ---
+        val realWeather = try {
+            weatherService.getForecastForCity(destinationCity).getOrNull()?.let { w ->
+                val daily = w.daily
+                WeatherForecast(
+                    generalDescription = "Echtzeit-Wetterdaten via Open-Meteo für $destinationCity",
+                    averageTemperature = "${w.current_weather?.temperature?.toInt() ?: "?"}°C",
+                    forecastDays = daily?.time?.take(7)?.mapIndexed { i, date ->
+                        val code = daily.weathercode.getOrElse(i) { 0 }
                         WeatherDayForecast(
-                            day = daily.time[i],
-                            condition = condition,
-                            icon = "weather_icon", 
-                            temperature = "${minT}° / ${maxT}°"
+                            day = date,
+                            condition = wmoCodeToCondition(code),
+                            icon = wmoCodeToIcon(code),
+                            temperature = "${daily.temperature_2m_max.getOrElse(i){0.0}.toInt()}°" +
+                                        "/${daily.temperature_2m_min.getOrElse(i){0.0}.toInt()}°C"
                         )
-                    }
-                    augmentedPlan = augmentedPlan.copy(
-                        weatherForecast = WeatherForecast(
-                            generalDescription = "Echtzeit-Wettervorhersage für $destination",
-                            averageTemperature = "${daily.temperature_2m_max.average().toInt()}°C max avg",
-                            forecastDays = days.take(7) 
-                        )
-                    )
-                }
-            }
-
-            // 2. Fetch real Hotels
-            localSearchService.searchLocalPlaces("Hotels in $destination").onSuccess { serpResponse ->
-                val places = serpResponse.local_results?.places ?: emptyList()
-                val realHotels = places.take(3).map { place ->
-                    Hotel(
-                        name = place.title ?: "Hotel",
-                        pricePerNight = place.price ?: "Preise auf Anfrage",
-                        totalPrice = "",
-                        rating = place.rating?.toString() ?: "N/A",
-                        location = place.address ?: destination,
-                        bestPick = true,
-                        pros = emptyList(),
-                        cons = emptyList(),
-                        url = "https://www.google.com/search?q=Hotel+${place.title?.replace(" ", "+")}+${destination.replace(" ", "+")}"
-                    )
-                }
-                
-                if (realHotels.isNotEmpty()) {    
-                    augmentedPlan = augmentedPlan.copy(hotels = realHotels)
-                }
-            }
-
-            // 3. Fix activity URLs and add Google Flights Link
-            val fixedActivities = augmentedPlan.activities.map { act ->
-                act.copy(url = "https://www.google.com/search?q=${act.title.replace(" ", "+")}+${destination.replace(" ", "+")}")
-            }
-            
-            val newFlights = if (augmentedPlan.flights.isEmpty()) {
-                listOf(
-                    Flight(
-                        airline = "Flugsuche via Google",
-                        price = "Preise prüfen",
-                        duration = "N/A",
-                        url = "https://www.google.com/travel/flights?q=Flights+from+${departure.replace(" ", "+")}+to+${destination.replace(" ", "+")}"
-                    )
+                    } ?: emptyList()
                 )
-            } else {
-                augmentedPlan.flights.map { flight ->
-                    flight.copy(url = "https://www.google.com/travel/flights?q=Flights+from+${departure.replace(" ", "+")}+to+${destination.replace(" ", "+")}")
-                }
             }
+        } catch (e: Exception) { null }
 
-            augmentedPlan = augmentedPlan.copy(
-                activities = fixedActivities,
-                flights = newFlights
-            )
+        // --- REAL FLIGHTS (SerpAPI Google Flights) ---
+        val realFlights = try {
+            val parts = dates.split("-").map { it.trim() }
+            val checkIn = parseDateToIso(parts.firstOrNull() ?: "")
+            val depCode = departure.substringAfter("(").substringBefore(")").trim()
+                .ifBlank { departure.take(3).uppercase() }
+            val arrCode = destinationAirport.ifBlank {
+                aiPlan.destination.substringAfter("(").substringBefore(")").trim()
+            }
+            if (depCode.length == 3 && arrCode.length == 3 && checkIn.isNotBlank()) {
+                flightService.searchFlights(depCode, arrCode, checkIn).getOrNull()
+                    ?.best_flights?.take(3)?.map { bf ->
+                        val leg = bf.flights.firstOrNull()
+                        Flight(
+                            airline = leg?.airline ?: "?",
+                            price = "${bf.price} €",
+                            duration = "${bf.total_duration / 60}h ${bf.total_duration % 60}min",
+                            isDirect = bf.flights.size == 1,
+                            bestPick = bf == flightService.searchFlights(depCode, arrCode, checkIn).getOrNull()?.best_flights?.firstOrNull(),
+                            url = "https://www.google.com/travel/flights",
+                            isRoundTrip = true,
+                            passengerCount = 1,
+                            outboundFlight = leg?.let { l ->
+                                FlightSegmentDetails(
+                                    departureAirport = l.departure_airport.id,
+                                    arrivalAirport = l.arrival_airport.id,
+                                    departureTime = l.departure_airport.time,
+                                    arrivalTime = l.arrival_airport.time,
+                                    duration = "${l.duration / 60}h ${l.duration % 60}min",
+                                    stops = bf.flights.size - 1
+                                )
+                            }
+                        )
+                    } ?: emptyList()
+            } else emptyList()
+        } catch (e: Exception) { emptyList() }
 
-            // Save and return
-            saveCachedPlan(augmentedPlan)
-            saveToHistory(augmentedPlan, dates)
-            
-            augmentedPlan
-        }
+        // --- REAL HOTELS (SerpAPI Google Hotels) ---
+        val realHotels = try {
+            val parts = dates.split("-").map { it.trim() }
+            val checkIn  = parseDateToIso(parts.firstOrNull() ?: "")
+            val checkOut = parseDateToIso(parts.getOrNull(1) ?: "")
+            if (checkIn.isNotBlank() && checkOut.isNotBlank()) {
+                com.example.service.HotelService().searchHotels(destinationCity, checkIn, checkOut).getOrNull()
+                    ?.properties?.take(3)?.map { p ->
+                        Hotel(
+                            name = p.name,
+                            pricePerNight = p.rate_per_night?.lowest ?: "Preis auf Anfrage",
+                            totalPrice = p.total_rate?.lowest ?: "",
+                            rating = p.overall_rating?.let { "%.1f".format(it) } ?: "N/A",
+                            location = destinationCity,
+                            bestPick = p == com.example.service.HotelService().searchHotels(destinationCity, checkIn, checkOut).getOrNull()?.properties?.firstOrNull(),
+                            pros = p.amenities?.take(3) ?: emptyList(),
+                            cons = emptyList(),
+                            url = p.link ?: "https://www.google.com/travel/hotels"
+                        )
+                    } ?: emptyList()
+            } else emptyList()
+        } catch (e: Exception) { emptyList() }
+
+        return aiPlan.copy(
+            weatherForecast = realWeather ?: aiPlan.weatherForecast,
+            flights = realFlights.ifEmpty { aiPlan.flights },
+            hotels = realHotels.ifEmpty { aiPlan.hotels }
+        )
+    }
+
+    private fun parseDateToIso(input: String): String {
+        val parts = input.trim().split(".")
+        return if (parts.size == 3) "${parts[2]}-${parts[1]}-${parts[0]}" else input
+    }
+    
+    private fun wmoCodeToCondition(code: Int) = when (code) {
+        0 -> "Klar und sonnig"; 1, 2 -> "Überwiegend klar"; 3 -> "Bedeckt"
+        45, 48 -> "Neblig"; 51, 53, 55 -> "Nieselregen"; 61, 63, 65 -> "Regen"
+        71, 73, 75 -> "Schneefall"; 80, 81, 82 -> "Regenschauer"
+        95, 96, 99 -> "Gewitter"; else -> "Wechselhaft"
+    }
+    
+    private fun wmoCodeToIcon(code: Int) = when (code) {
+        0 -> "sunny"; 1, 2 -> "partly_cloudy"; 3 -> "cloudy"
+        45, 48, 51, 53, 55, 61, 63, 65, 80, 81, 82 -> "rainy"
+        71, 73, 75 -> "cloudy"; 95, 96, 99 -> "thunderstorm"; else -> "partly_cloudy"
     }
 
     suspend fun generateSuggestions(homeCity: String): Result<List<DestinationSuggestion>> {
