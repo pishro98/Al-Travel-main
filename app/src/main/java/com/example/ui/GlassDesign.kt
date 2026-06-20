@@ -17,6 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.ScrollState
 
 // ── Core glass colors ──────────────────────────────────────────
 val GlassWhite    = Color.White.copy(alpha = 0.18f)
@@ -132,5 +137,40 @@ fun GlassScrim(modifier: Modifier = Modifier) {
                 )
             )
         )
+    )
+}
+
+fun Modifier.verticalScrollIndicator(
+    scrollState: ScrollState,
+    width: Dp = 4.dp,
+    color: Color = Color.White.copy(alpha = 0.45f),
+    trackColor: Color = Color.White.copy(alpha = 0.12f)
+): Modifier = this.drawWithContent {
+    drawContent()
+    val totalScrollable = scrollState.maxValue.toFloat()
+    if (totalScrollable <= 0f) return@drawWithContent
+
+    val trackHeight = size.height
+    val thumbHeightRatio = (size.height / (size.height + totalScrollable)).coerceIn(0.05f, 0.9f)
+    val thumbHeight = trackHeight * thumbHeightRatio
+    val scrollFraction = scrollState.value.toFloat() / totalScrollable
+    val thumbTop = (trackHeight - thumbHeight) * scrollFraction
+
+    val widthPx = width.toPx()
+    val x = size.width - widthPx - 2.dp.toPx()
+
+    // Track
+    drawRoundRect(
+        color = trackColor,
+        topLeft = Offset(x, 0f),
+        size = Size(widthPx, trackHeight),
+        cornerRadius = CornerRadius(widthPx / 2)
+    )
+    // Thumb
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(x, thumbTop),
+        size = Size(widthPx, thumbHeight),
+        cornerRadius = CornerRadius(widthPx / 2)
     )
 }

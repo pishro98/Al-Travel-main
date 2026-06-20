@@ -32,11 +32,11 @@ import androidx.compose.animation.*
 data class NavItem(val route: String, val label: String, val icon: ImageVector)
 
 val APP_NAV_ITEMS = listOf(
-    NavItem("home",    "Home",   Icons.Default.Home),
-    NavItem("agent",   "Planen", Icons.Default.SmartToy),
-    NavItem("flights", "Flüge",  Icons.Default.FlightTakeoff),
-    NavItem("trips",   "Reisen", Icons.Default.Luggage),
-    NavItem("profile", "Profil", Icons.Default.Person)
+    NavItem("home",      "Home",      Icons.Default.Home),
+    NavItem("discover",  "Entdecken", Icons.Default.Explore),
+    NavItem("weather",   "Wetter",    Icons.Default.WbSunny),
+    NavItem("trips",     "Reisen",    Icons.Default.Luggage),
+    NavItem("profile",   "Profil",    Icons.Default.Person)
 )
 
 @Composable
@@ -112,6 +112,7 @@ fun MainApp(viewModel: TravelViewModel) {
                 }
             }
             composable("flights") { FlightSearchScreen(viewModel, navController) }
+            composable("discover") { DiscoverScreen(navController, viewModel) }
             composable("trips")   { TripsScreen(navController, viewModel) }
             composable("profile") { ProfileScreen(viewModel) }
             composable("dashboard") {

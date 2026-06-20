@@ -81,6 +81,10 @@ class TravelViewModel(application: Application) : AndroidViewModel(application) 
     var destinationAirport by mutableStateOf("")
     var dates by mutableStateOf("")
     var group by mutableStateOf("")
+    var adultsCount by mutableStateOf(2)
+    var childrenCount by mutableStateOf(0)
+    var roomsCount by mutableStateOf(1)
+    var cabinClass by mutableStateOf("Economy")
     var budget by mutableStateOf("")
     var style by mutableStateOf("")
     var extra by mutableStateOf("")
@@ -263,7 +267,12 @@ class TravelViewModel(application: Application) : AndroidViewModel(application) 
                 departure = departure,
                 destination = if (destinationAirport.isNotBlank()) "$destination ($destinationAirport)" else destination,
                 dates = dates,
-                group = group,
+                group = buildString {
+                    append("$adultsCount Erwachsene")
+                    if (childrenCount > 0) append(", $childrenCount Kind${if (childrenCount > 1) "er" else ""}")
+                    append(" • $roomsCount Zimmer • $cabinClass")
+                    if (group.isNotBlank()) append(" • $group")
+                },
                 budget = budget,
                 style = style,
                 extra = enhancedExtra

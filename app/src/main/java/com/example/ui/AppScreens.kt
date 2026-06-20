@@ -38,6 +38,7 @@ fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
+                .verticalScrollIndicator(scrollState)
                 .padding(bottom = 100.dp)
         ) {
             // ── Hero glass header ───────────────────────────────
@@ -92,22 +93,14 @@ fun HomeScreen(navController: NavHostController, viewModel: TravelViewModel) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                QuickGlassAction(
-                    icon = Icons.Default.SmartToy, label = "KI-Planer",
-                    modifier = Modifier.weight(1f)
-                ) { navController.navigate("agent") }
-                QuickGlassAction(
-                    icon = Icons.Default.FlightTakeoff, label = "Flüge",
-                    modifier = Modifier.weight(1f)
-                ) { navController.navigate("flights") }
-                QuickGlassAction(
-                    icon = Icons.Default.Luggage, label = "Meine Reisen",
-                    modifier = Modifier.weight(1f)
-                ) { navController.navigate("trips") }
-                QuickGlassAction(
-                    icon = Icons.Default.Person, label = "Profil",
-                    modifier = Modifier.weight(1f)
-                ) { navController.navigate("profile") }
+                QuickGlassAction(icon = Icons.Default.SmartToy, label = "Reise planen",
+                    modifier = Modifier.weight(1f)) { navController.navigate("agent") }
+                QuickGlassAction(icon = Icons.Default.Explore, label = "Entdecken",
+                    modifier = Modifier.weight(1f)) { navController.navigate("discover") }
+                QuickGlassAction(icon = Icons.Default.WbSunny, label = "Wetter",
+                    modifier = Modifier.weight(1f)) { navController.navigate("weather") }
+                QuickGlassAction(icon = Icons.Default.Luggage, label = "Meine Reisen",
+                    modifier = Modifier.weight(1f)) { navController.navigate("trips") }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -446,6 +439,159 @@ fun ProfileScreen(viewModel: TravelViewModel) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Profil speichern", fontWeight = FontWeight.SemiBold, color = Color.White)
             }
+        }
+    }
+}
+
+@Composable
+fun DiscoverScreen(navController: NavHostController, viewModel: TravelViewModel) {
+    val scrollState = rememberScrollState()
+
+    // Destination categories with real curated lists
+    val beachDestinations = listOf(
+        "Mallorca 🏖️" to "PMI", "Teneriffa 🌊" to "TFS", "Bali 🌴" to "DPS",
+        "Malediven 🐠" to "MLE", "Phuket 🌺" to "HKT", "Kreta 🏛️" to "HER",
+        "Santorini 🌅" to "JTR", "Fuerteventura 🏄" to "FUE", "Koh Samui 🥥" to "USM",
+        "Gran Canaria ☀️" to "LPA"
+    )
+    val cityDestinations = listOf(
+        "Paris 🗼" to "CDG", "Tokio 🍣" to "HND", "New York 🗽" to "JFK",
+        "Dubai ✨" to "DXB", "London 🎡" to "LHR", "Barcelona 🎨" to "BCN",
+        "Amsterdam 🌷" to "AMS", "Wien 🎼" to "VIE", "Singapur 🌆" to "SIN",
+        "Istanbul 🕌" to "IST"
+    )
+    val cultureDestinations = listOf(
+        "Rom 🍕" to "FCO", "Kyoto 🌸" to "KIX", "Marrakech 🧿" to "RAK",
+        "Prag 🍺" to "PRG", "Lissabon 🎸" to "LIS", "Istanbul 🕌" to "IST",
+        "Florenz 🎭" to "FLR", "Budapest 🛁" to "BUD", "Athen 🏛️" to "ATH",
+        "Havanna 🎶" to "HAV"
+    )
+    val adventureDestinations = listOf(
+        "Patagonien 🏔️" to "PMC", "Neuseeland 🐑" to "AKL", "Kapstadt 🦁" to "CPT",
+        "Reykjavik 🌋" to "KEF", "Kanada 🍁" to "YVR", "Peru 🦙" to "LIM",
+        "Tansania 🐘" to "JRO", "Costa Rica 🦜" to "SJO", "Nepal 🏔️" to "KTM",
+        "Australien 🦘" to "SYD"
+    )
+
+    Box(modifier = Modifier.fillMaxSize().background(brush = GradientTravel)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .verticalScrollIndicator(scrollState)
+                .padding(bottom = 100.dp)
+        ) {
+            // Header
+            Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
+                Box(modifier = Modifier.fillMaxSize().background(
+                    Brush.radialGradient(listOf(Color(0xFF1A3A6E), Color(0xFF0A1628)), radius = 600f)
+                ))
+                GlassScrim(modifier = Modifier.fillMaxSize())
+                Column(modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)) {
+                    Text("Entdecken", color = Color.White,
+                        style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                    Text("Lass dich inspirieren", color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            // AI Suggestions (if profile set)
+            if (viewModel.userProfileHome.isNotBlank()) {
+                LaunchedEffect(viewModel.userProfileHome) {
+                    if (viewModel.suggestions.isEmpty() && !viewModel.suggestionsLoading) {
+                        viewModel.fetchSuggestions()
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Für dich empfohlen", color = Color.White,
+                        style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    if (viewModel.suggestionsLoading)
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp, color = AccentBlue)
+                }
+                Spacer(Modifier.height(12.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp)
+                ) {
+                    items(viewModel.suggestions) { s ->
+                        GlassCard(
+                            modifier = Modifier.width(220.dp).height(130.dp).clickable {
+                                viewModel.destination = s.destination
+                                viewModel.updateSuggestedAirportForDestination(s.destination)
+                                navController.navigate("agent")
+                            }
+                        ) {
+                            Box(Modifier.fillMaxSize().padding(16.dp)) {
+                                Column(Modifier.align(Alignment.BottomStart)) {
+                                    Text(s.destination, color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleMedium)
+                                    Text(s.subtitle, color = AccentTeal,
+                                        style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Category helper composable
+            @Composable
+            fun DestinationCategory(
+                title: String,
+                emoji: String,
+                destinations: List<Pair<String, String>>
+            ) {
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    "$emoji  $title",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+                Spacer(Modifier.height(12.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp)
+                ) {
+                    items(destinations) { (label, airport) ->
+                        GlassCard(
+                            modifier = Modifier.width(150.dp).height(100.dp).clickable {
+                                val city = label.substringBefore(" ").trim()
+                                viewModel.destination = city
+                                viewModel.destinationAirport = airport
+                                navController.navigate("agent")
+                            },
+                            cornerRadius = 18.dp
+                        ) {
+                            Box(Modifier.fillMaxSize().padding(14.dp)) {
+                                Column(Modifier.align(Alignment.BottomStart)) {
+                                    Text(label, color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+                                    Text(airport, color = AccentBlue,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            DestinationCategory("Strand & Sonne", "🏖️", beachDestinations)
+            DestinationCategory("Städtereisen", "🏙️", cityDestinations)
+            DestinationCategory("Kultur & Geschichte", "🏛️", cultureDestinations)
+            DestinationCategory("Abenteuer", "🌄", adventureDestinations)
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
